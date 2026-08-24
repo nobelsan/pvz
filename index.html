@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+<title>单词大战僵尸</title>
+<link rel="stylesheet" href="css/common.css?v=35">
+<link rel="stylesheet" href="css/style.css?v=35">
+</head>
+<body>
+<div id="js-startGame-btn" class="startGame-btn">点击开始游戏</div>
+<div class="pvz-sun-rule">☀️ 答对单词获得阳光 · 种错了用铲子调整布局</div>
+<div id="js-log-btn" class="check-log-btn change-log-btn">点击查看更新日志</div>
+<div id="js-import-btn" class="home-tool-btn">📥 导入单词</div>
+<div id="js-reset-btn" class="home-tool-btn danger">🔄 重置游戏</div>
+<!-- 游戏主场景 -->
+<div class="content-box">
+  <canvas id="canvas" width="1400" height="600"></canvas>
+</div>
+<!-- 更新日志 -->
+<div class="update-log" style="display: none;">
+  <div class="title">更新日志</div>
+  <dl>
+    <dt>🎮 玩法与机制说明（3 分钟上手）</dt>
+    <dd>1. 点「开始游戏」→ 答题卡弹出，答对单词 +150 阳光；答错不扣，稍后还会再考</dd>
+    <dd>2. 攒阳光种植物：豌豆射手 / 坚果墙 / 双发 / 加特林 / 食人花 / 樱桃炸弹，防守 5 行草坪</dd>
+    <dd>3. 拼写题可直接键盘打字，回车提交；听不出先看中文意思，再听发音</dd>
+    <dd>4. 大波僵尸来袭时答对题 → 全场减速 10 秒救场</dd>
+    <dd>5. 种错了用铲子免费铲除（不返还阳光）</dd>
+    <dd>6. 答对的词进图鉴收集，集满 10 词解锁金星、25 词解锁皇冠皮肤</dd>
+    <dd>7. 右上角可切换：拼词/简单模式、难度、关卡、无尽、错题本、图鉴</dd>
+    <dd>8. 右侧可「导入单词」（粘贴或选文件）和「重置游戏」（清空全部学习数据）</dd>
+    <dt>2026.8.23 单词大战僵尸·学习版</dt>
+    <dd>游戏更名「单词大战僵尸」，首页新增游戏名与玩法说明</dd>
+    <dd>词库：外研版三年级下册全册 189 词（2024 新课标新版，仅单词不含短语）</dd>
+    <dd>答对 +150 阳光、答错不惩罚、错题本按 1/2/4/7 天自动复习（顽固错题反复考）</dd>
+    <dd>难度由易到难：先选择题再拼写；拼写支持键盘输入、回车提交</dd>
+    <dd>四种题型均先读中文意思、再读两遍英文；听音/看图题带中文释义提示</dd>
+    <dd>大波题答对也送阳光（+150）且全场减速；废除单局 5 个新词限流，全册持续出新</dd>
+    <dd>鼠标坐标校准（种植落点精准）+ 铲子修复；右上角 HUD 全新统一视觉</dd>
+    <dd>新增「导入单词」「重置游戏」功能；基于开源项目改造（MIT），代码将开源分享</dd>
+    <dt>⚠️ 数据说明</dt>
+    <dd>学习进度、错题本、导入的单词等本地数据保存在<b>当前浏览器的本地存储</b>中</dd>
+    <dd><b>换浏览器、换设备、清除浏览器数据后会全部丢失</b>，且无法找回，请知悉</dd>
+    <dt>2017.11.27</dt>
+    <dd>添加植物-向日葵，可自动生成阳光</dd>
+    <dt>2017.11.28</dt>
+    <dd>添加植物-坚果墙，修复添加新植物使同行处于攻击状态的僵尸攻击判定失效bug</dd>
+    <dd>添加植物-樱桃炸弹</dd>
+    <dt>2017.11.29</dt>
+    <dd>添加小铲车，可一次性清除整行僵尸，调整植物冷却时间</dd>
+    <dt>2018.2.6</dt>
+    <dd>添加植物-食人花</dd>
+  </dl>
+  <input class="close-log-btn change-log-btn" type="button" value="关闭"></input>
+</div>
+<!-- 卡片列表 -->
+<ul class="cards-list">
+  <li class="cards-item" data-section="shovel">
+    <div class="card-intro">
+      <span>🪓 铲子</span>
+      <span>免费 · 无冷却</span>
+      <span>点击铲子后，再点击场上的植物即可铲除（不返还阳光）</span>
+    </div>
+  </li>
+  <li class="cards-item" data-section="wallnut">
+    <div class="card-intro">
+      <span>坚果墙</span>
+      <span>冷却时间：12秒</span>
+      <span>墙果具备坚硬的外壳，你可以使用他们来保护其他植物</span>
+    </div>
+  </li>
+  <li class="cards-item" data-section="peashooter">
+    <div class="card-intro">
+      <span>豌豆射手</span>
+      <span>冷却时间：7秒</span>
+      <span>向敌人射出豌豆</span>
+    </div>
+  </li>
+  <li class="cards-item" data-section="repeater">
+    <div class="card-intro">
+      <span>双发豌豆射手</span>
+      <span>冷却时间：10秒</span>
+      <span>向敌人连续射出两发豌豆</span>
+    </div>
+  </li>
+  <li class="cards-item" data-section="gatlingpea">
+    <div class="card-intro">
+      <span>加特林射手</span>
+      <span>冷却时间：15秒</span>
+      <span>向敌人快速射出豌豆</span>
+    </div>
+  </li>
+  <li class="cards-item" data-section="chomper">
+    <div class="card-intro">
+      <span>食人花</span>
+      <span>冷却时间：15秒</span>
+      <span>食人花能吞下所有自己可以吞下的僵尸</span>
+    </div>
+  </li>
+  <li class="cards-item" data-section="cherrybomb">
+    <div class="card-intro">
+      <span>樱桃炸弹</span>
+      <span>冷却时间：25秒</span>
+      <span>樱桃炸弹能够炸飞一片区域（以鼠标点击位置为中心9格内）的所有僵尸。</span>
+    </div>
+  </li>
+</ul>
+<!-- 游戏控制按键 -->
+<div class="menu-box">
+  <div id="pauseGame" class="contro-btn">暂停</div>
+  <div id="restartGame" class="contro-btn">开始游戏</div>
+</div>
+<!-- 系统自动生成阳光 -->
+<img class="sun-img systemSun" src="images/sun.gif" alt="">
+<script src="js/common.js?v=35"></script>
+<script src="js/scene.js?v=35"></script>
+<script src="js/game.js?v=35"></script>
+<script src="js/main.js?v=35"></script>
+<!-- ===== 学习层（GDD-03：答题即开挂）===== -->
+<script src="data/words-3B-all.js?v=35"></script>
+<script src="js/word-study.js?v=35"></script>
+<script src="js/answer-ui.js?v=35"></script>
+<script src="js/error-book.js?v=35"></script>
+<!-- ===== v34：导入单词 / 重置游戏面板 ===== -->
+<div id="pvz-import-panel" class="pvz-tool-panel" style="display:none">
+  <div class="pvz-tool-title">📥 导入自定义单词</div>
+  <div class="pvz-tool-hint">每行一个单词，格式：<b>单词 中文意思</b>（空格分隔，也可用 <b>单词|中文</b>）<br>示例：robot 机器人　moon 月亮<br>导入后永久加入词库（存本浏览器），换浏览器/清缓存会丢失</div>
+  <textarea id="pvz-import-text" class="pvz-import-text" placeholder="robot 机器人&#10;moon 月亮&#10;dragon 龙"></textarea>
+  <div class="pvz-tool-row">
+    <button id="pvz-import-file" class="pvz-tool-btn">📂 选文件</button>
+    <input type="file" id="pvz-import-fileinput" accept=".txt,.md,.csv" style="display:none">
+    <button id="pvz-import-confirm" class="pvz-tool-btn primary">导入</button>
+    <button id="pvz-import-close" class="pvz-tool-btn">关闭</button>
+  </div>
+  <div id="pvz-import-msg" class="pvz-tool-msg"></div>
+</div>
+<div id="pvz-reset-panel" class="pvz-tool-panel" style="display:none">
+  <div class="pvz-tool-title">🔄 重置游戏</div>
+  <div class="pvz-tool-hint">将清空：<b>学习进度、错题本、答题模式、难度、最高关卡、导入的单词</b>。<br><span class="danger-text">操作不可恢复，请谨慎！</span></div>
+  <div class="pvz-tool-row">
+    <button id="pvz-reset-confirm" class="pvz-tool-btn danger">确认重置</button>
+    <button id="pvz-reset-close" class="pvz-tool-btn">取消</button>
+  </div>
+</div>
+
+<script>
+  // 学习层入口：_main 已由 main.js 完成 start()
+  // v27：无到期复习词时持续上新词（不再限 5 个/局），避免整局反复打同一批词的体验
+  window.wordStudy.init({
+    unitFiles: ['words-3B-all'],   // 三下全册单词表（去短语，仅单词）
+    firstAskDelay: 8,             // 开局 8s 出首题（不冷场）
+  })
+  // v20：答对普通题 → 固定 +150 阳光 + 随机战斗 buff（用户要求"连续答对不需要奖励"→ 取消连击额外加成与连击徽章）
+  window.wordStudy.grantCallback = function () {
+    window._main.game.grantSunReward(150)
+    window._main.game.grantRandomPlantBuff()
+  }
+  // v21fix：答对大波提示题 → 全场减速 10s。修复前 `buffSlowZombies()` 未传 m 参数（v12 漏参），
+  // 导致 m=undefined 访问 .zombies 抛 TypeError → game.js updateImage 中断 → 画面清空只剩背景，
+  // 但 setInterval 持续触发 → 僵尸继续推进至房子触发失败（用户实测"答对四个之后清屏，过一会就输了"）
+  window.wordStudy.bigWaveCallback = function () {
+    window._main.game.buffSlowZombies(window._main)
+  }
+  window.answerUI.init()
+  window.errorBook.init()
+
+  // ===== v34：导入单词 / 重置游戏 =====
+  ;(function () {
+    var ip = document.getElementById('pvz-import-panel')
+    var rp = document.getElementById('pvz-reset-panel')
+    var msgEl = document.getElementById('pvz-import-msg')
+    var textEl = document.getElementById('pvz-import-text')
+    if (!ip || !rp) return
+    function show (el) { el.style.display = 'block' }
+    function hide (el) { el.style.display = 'none' }
+    function closeAll () { hide(ip); hide(rp) }
+    // 解析：每行 "单词 中文"（空格分隔）或 "单词|中文"
+    function parseWords (text) {
+      var out = []
+      String(text || '').split(/\r?\n/).forEach(function (ln) {
+        ln = (ln || '').trim()
+        if (!ln) return
+        var parts = ln.split(/\s+/)
+        var head = parts[0] || ''
+        var word = head.split('|')[0] || ''
+        var meaning = (head.indexOf('|') > -1 ? (head.split('|')[1] || '') : (ln.slice(head.length).trim())) || ''
+        word = word.toLowerCase()
+        if (word) out.push({ word: word, meaning: meaning })
+      })
+      return out
+    }
+    document.getElementById('js-import-btn').onclick = function () { closeAll(); textEl.value = ''; if (msgEl) msgEl.textContent = ''; show(ip) }
+    document.getElementById('js-reset-btn').onclick = function () { closeAll(); show(rp) }
+    document.getElementById('pvz-import-close').onclick = closeAll
+    document.getElementById('pvz-reset-close').onclick = closeAll
+    document.getElementById('pvz-import-confirm').onclick = function () {
+      var ws = window.wordStudy
+      if (!ws || !ws.importWords) return
+      var list = parseWords(textEl.value)
+      if (!list.length) { if (msgEl) msgEl.textContent = '⚠️ 没有识别到单词，请按「单词 中文」格式输入' ; return }
+      var n = ws.importWords(list)
+      if (msgEl) msgEl.textContent = '✅ 导入完成：新增 ' + n + ' 个单词，当前词库共 ' + ws.words.length + ' 个'
+    }
+    document.getElementById('pvz-import-file').onclick = function () { document.getElementById('pvz-import-fileinput').click() }
+    document.getElementById('pvz-import-fileinput').onchange = function (e) {
+      var f = e.target.files && e.target.files[0]
+      if (!f) return
+      var r = new FileReader()
+      r.onload = function () { textEl.value = r.result; if (msgEl) msgEl.textContent = '' }
+      r.readAsText(f, 'utf-8')
+    }
+    document.getElementById('pvz-reset-confirm').onclick = function () {
+      var ws = window.wordStudy
+      if (ws && ws.resetGame) ws.resetGame()
+    }
+  })()
+</script>
+</body>
+
+
+</body>
+</html>
